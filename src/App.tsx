@@ -32,7 +32,7 @@ export default function App(){
   try{
    const email=String(f.get("email")),password=String(f.get("password"));
    if(mode==="login"){const {error}=await supabase.auth.signInWithPassword({email,password});if(error)throw error;}
-   else{const {data,error}=await supabase.auth.signUp({email,password});if(error)throw error;if(data.user){const {error:pe}=await supabase.from("profiles").upsert({id:data.user.id,full_name:String(f.get("full_name")),username:String(f.get("username")),phone:String(f.get("phone")),region:String(f.get("region"))},{onConflict:"id"});if(pe)throw pe;}setNotice("تم استلام طلب التسجيل، والحساب بانتظار موافقة الإدارة.");setMode("login");}
+   else{const {error}=await supabase.auth.signUp({email,password,options:{data:{full_name:String(f.get("full_name")),username:String(f.get("username")),phone:String(f.get("phone")),region:String(f.get("region"))}}});if(error)throw error;setNotice("تم استلام طلب التسجيل، والحساب بانتظار موافقة الإدارة.");setMode("login");}
   }catch(e:any){setNotice(e.message||"تعذر إتمام العملية.");}finally{setBusy(false);}
  }
  async function favorite(id:string){if(!supabase||!session?.user)return;const has=favorites.includes(id);const r=has?await supabase.from("marketer_favorites").delete().eq("marketer_id",session.user.id).eq("product_id",id):await supabase.from("marketer_favorites").insert({marketer_id:session.user.id,product_id:id});if(r.error)setNotice(r.error.message);else setFavorites(v=>has?v.filter(x=>x!==id):[...v,id]);}
