@@ -31,7 +31,7 @@ export default function App(){
   e.preventDefault();if(!supabase)return;const f=new FormData(e.currentTarget);setBusy(true);setNotice("");
   try{
    const rawPhone=String(f.get("phone")).trim().replace(/[\s()-]/g,"");
-   const phone=rawPhone.startsWith("+")?rawPhone:rawPhone.startsWith("0")?"+970"+rawPhone.slice(1):"+970"+rawPhone;
+   const phone=rawPhone.startsWith("+")?rawPhone:rawPhone.startsWith("00")?"+"+rawPhone.slice(2):rawPhone.startsWith("970")?"+"+rawPhone:rawPhone.startsWith("0")?"+970"+rawPhone.slice(1):"+970"+rawPhone;
    const password=String(f.get("password"));
    if(!/^\+[1-9]\d{7,14}$/.test(phone))throw new Error("أدخلي رقم هاتف صحيحاً مع مفتاح الدولة.");
    if(mode==="login"){const {error}=await supabase.auth.signInWithPassword({phone,password});if(error)throw error;}
