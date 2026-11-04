@@ -75,3 +75,51 @@
  .public-catalog .card .art{height:205px}
 }
 @media(prefers-reduced-motion:reduce){.admin-entry,.public-catalog .card{transition:none}}
+
+
+/* Marketer-first welcome experience: typography and layout only, no images */
+.public-hero.marketer-hero{
+  min-height:410px;grid-template-columns:1.35fr .65fr;gap:35px;
+  background:radial-gradient(ellipse at 78% 25%,#fff 0,#f5edf6 48%,#eee2f0 100%);
+  padding-top:58px;padding-bottom:75px
+}
+.marketer-hero .hero-copy{max-width:680px}
+.marketer-hero .hero-kicker{color:#8b6c96;font-size:14px;font-weight:700;margin:22px 0 0}
+.marketer-hero .hero-copy h1{margin:9px 0 17px}
+.marketer-hero .hero-copy>p:not(.hero-kicker){max-width:590px;line-height:2.1}
+.marketer-side{min-height:245px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;border:1px solid #d9c6df;border-radius:48% 48% 24px 24px;background:linear-gradient(155deg,#ffffffb8,#e9dced88);color:#886693}
+.marketer-monogram{width:145px;height:145px;border:1px solid #c8afcf;border-radius:50%;display:grid;place-items:center;font-size:92px;font-weight:700;color:#805b8d;background:#ffffff80;box-shadow:0 0 0 14px #ffffff55}
+.marketer-side>span{font-size:12px;letter-spacing:1px}
+.marketer-intro{max-width:1200px;margin:48px auto 34px;padding:0 24px;text-align:center}
+.marketer-heading>small{color:#987ca1;font-weight:700}
+.marketer-heading h2{font-size:clamp(25px,3vw,34px);color:#493451;margin:9px 0}
+.marketer-heading>p{color:#817584;margin:0 auto;max-width:620px;line-height:1.9}
+.marketer-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:28px 0 20px;text-align:right}
+.marketer-steps article{background:#fff;border:1px solid #eee5f0;border-radius:17px;padding:23px;box-shadow:0 8px 24px #4c365308}
+.marketer-steps article>span{display:grid;place-items:center;width:37px;height:37px;border-radius:50%;background:#f1e8f3;color:#805b8d;font-size:12px;font-weight:700;margin-bottom:17px}
+.marketer-steps article>b{display:block;color:#4d3756;font-size:17px}
+.marketer-steps article>p{color:#817584;font-size:13px;line-height:1.9;margin:9px 0 0}
+.marketer-promise{display:grid;grid-template-columns:repeat(3,1fr);background:#f3edf4;border-radius:16px;padding:20px;margin:20px 0 24px}
+.marketer-promise>div{display:grid;gap:5px;border-left:1px solid #d9c9de}
+.marketer-promise>div:last-child{border:0}
+.marketer-promise b{font-size:25px;color:#704d7d}
+.marketer-promise span{font-size:11px;color:#8d7e92}
+.marketer-browse{background:#684675;color:#fff;padding:14px 24px;border-radius:30px;font-weight:700}
+.marketer-browse span{margin-right:12px}
+@media(max-width:760px){
+ .public-hero.marketer-hero{grid-template-columns:1fr;gap:20px;padding:35px 20px 58px;text-align:center}
+ .marketer-hero .hero-copy{margin:auto}
+ .marketer-hero .hero-copy h1{font-size:42px}
+ .marketer-hero .hero-copy>p:not(.hero-kicker){font-size:14px;margin:0 auto 20px}
+ .marketer-side{min-height:165px;grid-row:1;border-radius:22px;gap:8px}
+ .marketer-monogram{width:88px;height:88px;font-size:55px;box-shadow:0 0 0 8px #ffffff55}
+ .marketer-side>span{font-size:10px}
+ .marketer-intro{padding:0 15px;margin:30px auto}
+ .marketer-steps{grid-template-columns:1fr;gap:10px;margin:20px 0}
+ .marketer-steps article{padding:18px}
+ .marketer-steps article>span{margin-bottom:10px}
+ .marketer-promise{grid-template-columns:1fr;gap:14px;padding:17px}
+ .marketer-promise>div{border-left:0;border-bottom:1px solid #d9c9de;padding-bottom:12px}
+ .marketer-promise>div:last-child{border:0;padding:0}
+}
+@media(prefers-reduced-motion:reduce){.marketer-browse{transition:none}}
