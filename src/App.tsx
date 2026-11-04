@@ -30,10 +30,10 @@ export default function App(){
  async function auth(e:FormEvent<HTMLFormElement>){
   e.preventDefault();if(!supabase)return;const f=new FormData(e.currentTarget);setBusy(true);setNotice("");
   try{
-   const rawPhone=String(f.get("phone")).trim().replace(/[\\s()-]/g,"");
+   const rawPhone=String(f.get("phone")).trim().replace(/[\s()-]/g,"");
    const phone=rawPhone.startsWith("+")?rawPhone:rawPhone.startsWith("0")?"+970"+rawPhone.slice(1):"+970"+rawPhone;
    const password=String(f.get("password"));
-   if(!/^\\+[1-9]\\d{7,14}$/.test(phone))throw new Error("أدخلي رقم هاتف صحيحاً مع مفتاح الدولة.");
+   if(!/^\+[1-9]\d{7,14}$/.test(phone))throw new Error("أدخلي رقم هاتف صحيحاً مع مفتاح الدولة.");
    if(mode==="login"){const {error}=await supabase.auth.signInWithPassword({phone,password});if(error)throw error;}
    else{const {error}=await supabase.auth.signUp({phone,password,options:{data:{full_name:String(f.get("full_name")),username:String(f.get("username")).trim(),region:String(f.get("region"))}}});if(error)throw error;setNotice("تم إرسال طلب التسجيل. إذا طلب النظام تأكيد الهاتف، أدخلي رمز الرسالة النصية. وبعدها ينتظر الحساب موافقة الإدارة.");setMode("login");}
   }catch(e:any){setNotice(e.message||"تعذر إتمام العملية.");}finally{setBusy(false);}
