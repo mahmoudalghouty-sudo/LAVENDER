@@ -45,7 +45,55 @@ export default function App(){
  async function verifyPhoneOtp(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!supabase||!pendingPhone)return;const f=new FormData(e.currentTarget);setBusy(true);setNotice("");try{const {error}=await supabase.auth.verifyOtp({phone:pendingPhone,token:String(f.get("otp")).trim(),type:"sms"});if(error)throw error;setPendingPhone("");setMode("login");setNotice("تم تأكيد الهاتف بنجاح. حسابك بانتظار موافقة الإدارة.");}catch(e:any){setNotice(e.message||"تعذر التحقق من الرمز.");}finally{setBusy(false);}}
  async function favorite(id:string){if(!supabase||!session?.user)return;const has=favorites.includes(id);const r=has?await supabase.from("marketer_favorites").delete().eq("marketer_id",session.user.id).eq("product_id",id):await supabase.from("marketer_favorites").insert({marketer_id:session.user.id,product_id:id});if(r.error)setNotice(r.error.message);else setFavorites(v=>has?v.filter(x=>x!==id):[...v,id]);}
  async function analyzeProduct(){if(!supabase||(!aiUrl.trim()&&!aiFile)){setNotice("أضيفي رابط المنتج أو ارفعي صورة أولاً.");return;}setAiBusy(true);setNotice("");try{let imageData:string|undefined;if(aiFile){imageData=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(new Error("تعذرت قراءة الصورة."));reader.readAsDataURL(aiFile);});}const {data,error}=await supabase.functions.invoke("lavender-product-assistant",{body:{url:aiUrl.trim()||undefined,image_data:imageData}});if(error)throw error;if(!data?.product)throw new Error(data?.error||"لم يتمكن الذكاء الاصطناعي من استخراج بيانات واضحة.");const p=data.product;setDraft({name:p.name||"",description:p.description||"",price:p.price==null?"":String(p.price),colors:Array.isArray(p.colors)?p.colors.join(", "):"",sizes:Array.isArray(p.sizes)?p.sizes.join(", "):""});setNotice("تم استخراج البيانات. راجعيها وعدّليها ثم اضغطي حفظ المنتج.");}catch(e:any){setNotice(e.message||"تعذر تحليل المنتج. يمكنك إدخال البيانات يدوياً.");}finally{setAiBusy(false);}}
- async function createProduct(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!supabase)return;const f=new FormData(e.currentTarget);setBusy(true);try{const {data:product,error}=await supabase.from("products").insert({name:String(f.get("name")),description:String(f.get("description")),base_price:Number(f.get("price")),delivery_fee:Number(f.get("delivery")||15),category_id:String(f.get("category")||"")||null}).select().single();if(error)throw error;const colors=String(f.get("colors")||"").split(",").map(x=>x.trim()).filter(Boolean);const sizes=String(f.get("sizes")||"").split(",").map(x=>x.trim()).filter(Boolean);const stock=Math.max(0,Number(f.get("stock")||0));const finalColors=colors.length?colors:["لون موحد"];const finalSizes=sizes.length?sizes:["مقاس واحد"];const variants=finalColors.flatMap(color=>finalSizes.map(size=>({product_id:product.id,color,size,stock_quantity:stock})));const {error:ve}=await supabase.from("product_variants").insert(variants);if(ve)throw ve;const file=aiFile||f.get("image");if(file instanceof File&&file.size>0){const path=product.id+"/"+crypto.randomUUID()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");const {error:ue}=await supabase.storage.from("lavender-products").upload(path,file,{contentType:file.type,upsert:false});if(ue)throw ue;const {error:ie}=await supabase.from("product_images").insert({product_id:product.id,storage_path:path,alt_text:product.name});if(ie)throw ie;}setNotice("تمت إضافة المنتج وخياراته.");setDraft({name:"",description:"",price:"",colors:"",sizes:""});setAiUrl("");setAiFile(null);await refresh();}catch(err:any){setNotice(err.message||"تعذرت إضافة المنتج.");}finally{setBusy(false);}}
+ async function createProduct(e:FormEvent<HTMLFormElement>){
+  e.preventDefault();
+  if(!supabase)return;
+  const form=e.currentTarget;
+  const f=new FormData(form);
+  setBusy(true);
+  let uploadedPath:string|null=null;
+  try{
+   const productId=crypto.randomUUID();
+   const colors=String(f.get("colors")||"").split(",").map(x=>x.trim()).filter(Boolean);
+   const sizes=String(f.get("sizes")||"").split(",").map(x=>x.trim()).filter(Boolean);
+   const stock=Math.max(0,Number(f.get("stock")||0));
+   const finalColors=colors.length?colors:["لون موحد"];
+   const finalSizes=sizes.length?sizes:["مقاس واحد"];
+   const variants=finalColors.flatMap(color=>finalSizes.map(size=>({color,size,stock_quantity:stock})));
+   const file=aiFile||f.get("image");
+   if(file instanceof File&&file.size>0){
+    if(!file.type.startsWith("image/"))throw new Error("يجب اختيار ملف صورة صالح.");
+    if(file.size>8*1024*1024)throw new Error("حجم الصورة يجب ألا يتجاوز 8 ميغابايت.");
+    uploadedPath=productId+"/"+crypto.randomUUID()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+    const {error:ue}=await supabase.storage.from("lavender-products").upload(uploadedPath,file,{contentType:file.type,upsert:false});
+    if(ue)throw ue;
+   }
+   const {error}=await supabase.rpc("create_lavender_product",{
+    p_product_id:productId,
+    p_name:String(f.get("name")).trim(),
+    p_description:String(f.get("description")||""),
+    p_base_price:Number(f.get("price")),
+    p_delivery_fee:Number(f.get("delivery")||15),
+    p_category_id:String(f.get("category")||"")||null,
+    p_variants:variants,
+    p_image_path:uploadedPath,
+    p_image_alt:String(f.get("name")||"")
+   });
+   if(error)throw error;
+   setNotice("تمت إضافة المنتج وصورته وخياراته بنجاح.");
+   setDraft({name:"",description:"",price:"",colors:"",sizes:""});
+   setAiUrl("");
+   setAiFile(null);
+   form.reset();
+   await refresh();
+  }catch(err:any){
+   if(uploadedPath){
+    const {error:cleanupError}=await supabase.storage.from("lavender-products").remove([uploadedPath]);
+    if(cleanupError)console.error("Product image cleanup failed",cleanupError.message);
+   }
+   setNotice(err.message||"تعذرت إضافة المنتج. لم يتم حفظ بيانات جزئية.");
+  }finally{setBusy(false);}
+}
  async function updateOrderStatus(id:string,status:string){if(!supabase)return;const {error}=await supabase.from("orders").update({status}).eq("id",id);if(error)setNotice(error.message);else{setNotice("تم تحديث حالة الطلب.");await refresh();}}async function createCategory(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!supabase)return;const f=new FormData(e.currentTarget);const {error}=await supabase.from("categories").insert({name:String(f.get("category_name")).trim()});if(error)setNotice(error.message);else{setNotice("تمت إضافة التصنيف.");(e.currentTarget as HTMLFormElement).reset();await refresh();}}async function changeMarketerStatus(id:string,status:string){if(!supabase)return;const {error}=await supabase.from("profiles").update({status}).eq("id",id);if(error)setNotice(error.message);else{setNotice("تم تحديث حالة المسوّق.");await refresh();}}async function createOrder(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!supabase||!session?.user||!orderProduct)return;const f=new FormData(e.currentTarget);const variantId=String(f.get("variant_id")||"");const quantity=Math.max(1,Number(f.get("quantity")||1));const variant=orderProduct.product_variants?.find(v=>v.id===variantId);if(!variant||variant.stock_quantity<quantity){setNotice("الخيار المحدد غير متاح بهذه الكمية. حدّث الصفحة أو اختر كمية أقل.");return;}setBusy(true);try{const {error}=await supabase.rpc("create_lavender_order",{p_customer_name:String(f.get("name")),p_customer_phone:String(f.get("phone")),p_customer_region:String(f.get("region")),p_customer_address:String(f.get("address")||""),p_notes:String(f.get("notes")||""),p_product_id:orderProduct.id,p_variant_id:variantId,p_quantity:quantity});if(error)throw error;setOrderProduct(null);setNotice("تم إرسال الطلب للإدارة.");await refresh();setPage("orders");}catch(e:any){setNotice(e.message||"تعذر إرسال الطلب.");}finally{setBusy(false);}}
  const admin=profile?.role==="admin",approved=admin||profile?.status==="approved";
  useEffect(()=>{if(!supabase)return;let active=true;(async()=>{const rows=await Promise.all(products.map(async p=>{const image=p.product_images?.[0];if(!image)return [p.id,""] as const;const {data}=supabase!.storage.from("lavender-products").getPublicUrl(image.storage_path);return [p.id,data.publicUrl||""] as const;}));if(active)setImageUrls(Object.fromEntries(rows.filter(x=>x[1])));})();return()=>{active=false;};},[products]);
