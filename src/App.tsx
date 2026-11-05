@@ -15,7 +15,8 @@ export default function App(){
  const [mode,setMode]=useState<"login"|"signup">("login"),[page,setPage]=useState("products"),[adminLogin,setAdminLogin]=useState(false);
  const [notice,setNotice]=useState(""),[busy,setBusy]=useState(false),[search,setSearch]=useState(""),[pendingPhone,setPendingPhone]=useState("");
  const [chosen,setChosen]=useState<Product|null>(null),[orderProduct,setOrderProduct]=useState<Product|null>(null);
- const [aiUrl,setAiUrl]=useState(""),[aiFile,setAiFile]=useState<File|null>(null),[aiBusy,setAiBusy]=useState(false);\n const [draft,setDraft]=useState({name:"",description:"",price:"",colors:"",sizes:""});
+ const [aiUrl,setAiUrl]=useState(""),[aiFile,setAiFile]=useState<File|null>(null),[aiBusy,setAiBusy]=useState(false);
+ const [draft,setDraft]=useState({name:"",description:"",price:"",colors:"",sizes:""});
  useEffect(()=>{if(!supabase)return;supabase.auth.getSession().then(({data})=>setSession(data.session));const {data}=supabase.auth.onAuthStateChange((_e,s)=>setSession(s));return()=>data.subscription.unsubscribe();},[]);
  useEffect(()=>{if(!supabase||!session?.user){setProfile(null);return;}supabase.from("profiles").select("*").eq("id",session.user.id).maybeSingle().then(({data,error})=>{if(error)setNotice(error.message);setProfile(data as Profile|null);});},[session]);
  async function refresh(){
